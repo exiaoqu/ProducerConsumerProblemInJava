@@ -1,2 +1,2 @@
 # ProducerConsumerProblemInJava
-Java solution for producer and consumer problem
+Java solutions for producer and consumer problem

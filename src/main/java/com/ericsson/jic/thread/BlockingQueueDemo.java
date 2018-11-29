@@ -1,12 +1,13 @@
 package com.ericsson.jic.thread;
 
 import java.util.Random;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingDeque;
 
 /**
- * Producer Consumer Pattern: Using BlockingQueue
+ * Producer Consumer Pattern: Using BlockingQueueDemo
  */
-public class BlockingQueue {
+public class BlockingQueueDemo {
 
     private static final int CAPACITY = 5;
 
@@ -30,8 +31,8 @@ public class BlockingQueue {
     }
 
     public static class Buffer {
-        
-        LinkedBlockingDeque<String> blockingQueue;
+
+        BlockingQueue<String> blockingQueue;
 
         public Buffer(int maxSize) {
             blockingQueue = new LinkedBlockingDeque<String>(maxSize);
@@ -65,17 +66,20 @@ public class BlockingQueue {
             while (true) {
                 try {
                     buff.put(name, e++);
-                } catch (InterruptedException ex) {
-                    ex.printStackTrace();
+                    BlockingQueueDemo.randomSleep();
+                } catch (InterruptedException ie) {
+                    ie.printStackTrace();
                 }
-
-                BlockingQueue.randomSleep();
             }
 
-            //            while (true) {
-            //                buff.put(name, getNextE());
-            //                BlockingQueue.randomSleep();
-            //            }
+//            while (true) {
+//                try {
+//                    buff.put(name, getNextE());
+//                    BlockingQueueDemo.randomSleep();
+//                } catch (InterruptedException ie) {
+//                    ie.printStackTrace();
+//                }
+//            }
 
         }
 
@@ -100,20 +104,15 @@ public class BlockingQueue {
             while (true) {
                 try {
                     buff.get(name);
-                } catch (InterruptedException ex) {
-                    ex.printStackTrace();
+                    BlockingQueueDemo.randomSleep();
+                } catch (InterruptedException ie) {
+                    ie.printStackTrace();
                 }
-
-                BlockingQueue.randomSleep();
             }
         }
     }
 
-    private static void randomSleep() {
-        try {
-            Thread.sleep(new Random().nextInt(1000));
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+    private static void randomSleep() throws InterruptedException {
+        Thread.sleep(new Random().nextInt(1000));
     }
 }

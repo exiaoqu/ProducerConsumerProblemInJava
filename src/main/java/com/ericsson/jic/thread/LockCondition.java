@@ -35,8 +35,8 @@ public class LockCondition {
 
     public static class Buffer {
 
-        private static final Lock lock = new ReentrantLock(); // lock
-        private static final Condition fullCondition = lock.newCondition(); // full condition
+        private static final Lock lock = new ReentrantLock(); // * fair vs. non-fair detail
+        private static final Condition fullCondition = lock.newCondition();  // full condition
         private static final Condition emptyCondition = lock.newCondition(); // empty condition
 
         private Queue<String> queue = new LinkedList<String>();
@@ -46,59 +46,52 @@ public class LockCondition {
             this.maxSize = maxSize;
         }
 
-        public void put(final String name, final int e) {
-            // acquire the lock
-            lock.lock();
-
-            while (queue.size() >= maxSize) { // spinlock
-                try {
+        public void put(final String name, final int e) throws InterruptedException {
+            // acquire the lock - dead wait problem
+            lock.lock(); // trylock(), trylock(10, TimeUnit.MILLISECONDS), lockInterruptibly()
+            try {
+                while (queue.size() >= maxSize) {
                     System.out.println("Queue is full, Producer[" + name + "] thread waiting for "
                             + "consumer to take something from queue.");
 
-                    // conidtion not fulfil, producer blocking
-                    fullCondition.await();
-                } catch (Exception ex) {
-                    ex.printStackTrace();
+                    // conidtion not fulfil, release lock and waiting for being waken, once waken acquire the lock again
+                    fullCondition.await(); // await(10, TimeUnit.MILLISECONDS), awaitNanos(1000), awaitUninterruptibly(), awaitUntil(Date deadline)
                 }
+
+                System.out.println("[" + name + "] Producing value : +" + e);
+                queue.offer(String.format("%d(%s)", e, name));
+
+                // awake other producers and consumers
+                fullCondition.signalAll();  // signal()
+                emptyCondition.signalAll();
+            } finally {
+                // release the lock
+                lock.unlock();
             }
-
-            System.out.println("[" + name + "] Producing value : +" + e);
-            queue.offer(String.format("%d(%s)", e, name));
-
-            // awake other producers and consumers
-            fullCondition.signalAll();
-            emptyCondition.signalAll();
-
-            // release the lock
-            lock.unlock();
         }
 
-        public String get(final String name) {
-            // acquire the lock
-            lock.lock();
-
-            while (queue.isEmpty()) { // spinlock
-                try {
+        public String get(final String name) throws InterruptedException {
+            // acquire the lock  - dead wait problem
+            lock.lock(); // trylock(), trylock(10, TimeUnit.MILLISECONDS), lockInterruptibly()
+            try {
+                while (queue.isEmpty()) {
                     System.out.println("Queue is empty, Consumer[" + name + "] thread is waiting for Producer");
 
-                    // conidtion not fulfil, consumer blocking
-                    emptyCondition.await();
-
-                } catch (Exception ex) {
-                    ex.printStackTrace();
+                    // conidtion not fulfil, release lock and waiting for being waken, once waken acquire the lock again
+                    emptyCondition.await(); // await(10, TimeUnit.MILLISECONDS), awaitNanos(1000), awaitUntil(Date deadline), awaitUninterruptibly()
                 }
+                String e = queue.poll();
+                System.out.println("[" + name + "] Consuming value : -" + e);
+
+                // awake other producers and consumers
+                fullCondition.signalAll();  // signal()
+                emptyCondition.signalAll();
+
+                return e;
+            } finally {
+                // release the lock
+                lock.unlock();
             }
-            String e = queue.poll();
-            System.out.println("[" + name + "] Consuming value : -" + e);
-
-            // awake other producers and consumers
-            fullCondition.signalAll();
-            emptyCondition.signalAll();
-
-            // release the lock
-            lock.unlock();
-
-            return e;
         }
     }
 
@@ -116,14 +109,22 @@ public class LockCondition {
 
             int e = 0;
             while (true) {
-                buff.put(name, e++);
-                LockCondition.randomSleep();
+                try {
+                    buff.put(name, e++);
+                    LockCondition.randomSleep();
+                } catch (InterruptedException ie) {
+                    ie.printStackTrace();
+                }
             }
 
-            //            while (true) {
-            //                buff.put(name, getNextE());
-            //                LockCondition.randomSleep();
-            //            }
+//            while (true) {
+//                try {
+//                    buff.put(name, getNextE());
+//                    LockCondition.randomSleep();
+//                } catch (InterruptedException ie) {
+//                    ie.printStackTrace();
+//                }
+//            }
 
         }
 
@@ -146,17 +147,17 @@ public class LockCondition {
 
         public void run() {
             while (true) {
-                buff.get(name);
-                LockCondition.randomSleep();
+                try {
+                    buff.get(name);
+                    LockCondition.randomSleep();
+                } catch (InterruptedException ie) {
+                    ie.printStackTrace();
+                }
             }
         }
     }
 
-    private static void randomSleep() {
-        try {
-            Thread.sleep(new Random().nextInt(1000));
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+    private static void randomSleep() throws InterruptedException {
+        Thread.sleep(new Random().nextInt(1000));
     }
 }

@@ -1,10 +1,6 @@
 package com.ericsson.jic.thread;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PipedInputStream;
-import java.io.PipedOutputStream;
+import java.io.*;
 import java.util.Random;
 
 /**
@@ -74,18 +70,28 @@ public class PipedInputOutputStream {
             while (true) {
                 try {
                     buff.put(name, e++);
+                    PipedInputOutputStream.randomSleep();
+                } catch (InterruptedException ie) {
+                    ie.printStackTrace();
                 } catch (IOException ex) {
                     ex.printStackTrace();
                     System.exit(-1);
                 }
 
-                PipedInputOutputStream.randomSleep();
+
             }
 
-            //            while (true) {
-            //                buff.put(name, getNextE());
-            //                PipedInputOutputStream.randomSleep();
-            //            }
+//            while (true) {
+//                try {
+//                    buff.put(name, getNextE());
+//                    PipedInputOutputStream.randomSleep();
+//                } catch (InterruptedException ie) {
+//                    ie.printStackTrace();
+//                } catch (IOException ex) {
+//                    ex.printStackTrace();
+//                    System.exit(-1);
+//                }
+//            }
 
         }
 
@@ -110,21 +116,18 @@ public class PipedInputOutputStream {
             while (true) {
                 try {
                     buff.get(name);
+                    PipedInputOutputStream.randomSleep();
+                } catch (InterruptedException ie) {
+                    ie.printStackTrace();
                 } catch (IOException ex) {
                     ex.printStackTrace();
                     System.exit(-1);
                 }
-
-                PipedInputOutputStream.randomSleep();
             }
         }
     }
 
-    private static void randomSleep() {
-        try {
-            Thread.sleep(new Random().nextInt(1000));
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+    private static void randomSleep() throws InterruptedException {
+        Thread.sleep(new Random().nextInt(1000));
     }
 }

@@ -13,7 +13,7 @@ import java.util.Random;
  * CLI running:
  * mvn exec:java -Dexec.mainClass="com.ericsson.jic.process.nioShmConsumer" -Dexec.args="C-1"
  */
-public class mnioShmConsumer extends Thread {
+public class nioShmConsumer extends Thread {
     private static final int QUEUE_CAPACITY_OFFSET = 0;
     private static final int QUEUE_START_OFFSET = 16;
     private static final int QUEUE_CONTENT_LENGTH = 64;
@@ -44,14 +44,13 @@ public class mnioShmConsumer extends Thread {
             mappedByteBuffer = fileChannel.map(FileChannel.MapMode.READ_WRITE, 0, size).load();
 
         } catch (IOException ex) {
-            System.out.println(ex);
+            ex.printStackTrace();
             System.exit(0);
         }
     }
 
     public void run() {
         while (true) {
-
             try {
                 FileLock lock = fileChannel.tryLock(); // exclusive lock on the file channel
                 if (lock != null) {
@@ -80,21 +79,19 @@ public class mnioShmConsumer extends Thread {
                     continue;
                 }
 
-            } catch (IOException ex) {
-                System.out.print(ex);
-                break;
-            }
+                randomSleep();
 
-            randomSleep();
+            } catch (InterruptedException ie) {
+                ie.printStackTrace();
+            } catch (IOException ex) {
+                ex.printStackTrace();
+                System.exit(-1);
+            }
         }
     }
 
-    private static void randomSleep() {
-        try {
-            Thread.sleep(new Random().nextInt(1000));
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+    private static void randomSleep() throws InterruptedException {
+        Thread.sleep(new Random().nextInt(1000));
     }
 
     public static void main(String args[]) {

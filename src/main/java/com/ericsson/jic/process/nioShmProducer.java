@@ -43,7 +43,7 @@ public class nioShmProducer extends Thread {
             // acquire the read-write share memory
             mappedByteBuffer = fileChannel.map(FileChannel.MapMode.READ_WRITE, 0, size).load();
         } catch (IOException ex) {
-            System.out.println(ex);
+            ex.printStackTrace();
             System.exit(0);
         }
 
@@ -80,27 +80,24 @@ public class nioShmProducer extends Thread {
                     lock.release();
 
                 } else {
-                    // System.err.println("Producer: lock failed");
+                    // System.err.println("Producer: trylock failed");
                     continue;
                 }
 
+                randomSleep();
+
+            } catch (InterruptedException ie) {
+                ie.printStackTrace();
             } catch (IOException ex) {
-                System.out.print(ex);
-                break;
+                ex.printStackTrace();
+                System.exit(-1);
             }
-
-            randomSleep();
-
         }
 
     }
 
-    private static void randomSleep() {
-        try {
-            Thread.sleep(new Random().nextInt(1000));
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+    private static void randomSleep() throws InterruptedException {
+        Thread.sleep(new Random().nextInt(1000));
     }
 
     public static void main(String args[]) {

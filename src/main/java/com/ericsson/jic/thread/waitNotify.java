@@ -18,6 +18,7 @@ public class waitNotify {
         Thread consumer1 = new Consumer("C-1", buff);
         Thread consumer2 = new Consumer("C-2", buff);
         Thread consumer3 = new Consumer("C-3", buff);
+        Thread consumer4 = new Consumer("C-4", buff);
 
         producer1.start();
         producer2.start();
@@ -25,6 +26,7 @@ public class waitNotify {
         consumer1.start();
         consumer2.start();
         consumer3.start();
+        consumer4.start();
     }
 
     public static class Buffer {
@@ -36,15 +38,11 @@ public class waitNotify {
             this.maxSize = maxSize;
         }
 
-        public synchronized void put(final String name, final int e) {
-            while (queue.size() >= maxSize) { // spinlock
-                try {
-                    System.out.println("Queue is full, Producer[" + name + "] thread waiting for "
-                            + "consumer to take something from queue.");
-                    this.wait();
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                }
+        public synchronized void put(final String name, final int e) throws InterruptedException {
+            while (queue.size() >= maxSize) {
+                System.out.println("Queue is full, Producer[" + name + "] thread waiting for "
+                        + "consumer to take something from queue.");
+                this.wait(); // this.wait(0, 2000)
             }
 
             System.out.println("[" + name + "] Producing value : +" + e);
@@ -52,14 +50,10 @@ public class waitNotify {
             this.notify(); // this.notifyAll()
         }
 
-        public synchronized String get(final String name) {
-            while (queue.isEmpty()) { // spinlock
-                try {
-                    System.out.println("Queue is empty, Consumer[" + name + "] thread is waiting for Producer");
-                    this.wait();
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                }
+        public synchronized String get(final String name) throws InterruptedException {
+            while (queue.isEmpty()) {
+                System.out.println("Queue is empty, Consumer[" + name + "] thread is waiting for Producer");
+                this.wait(); // this.wait(0, 2000)
             }
             String e = queue.poll();
             System.out.println("[" + name + "] Consuming value : -" + e);
@@ -82,15 +76,24 @@ public class waitNotify {
 
             int e = 0;
             while (true) {
-                buff.put(name, e++);
-                waitNotify.randomSleep();
+                try {
+                    buff.put(name, e++);
+                    waitNotify.randomSleep();
+                } catch (InterruptedException ie) {
+                    ie.printStackTrace();
+                }
+                // exception handling in thread run method
             }
 
-            //            while (true) {
-            //                buff.put(name, getNextE());
-            //                waitNotifyEn.randomSleep();
-            //            }
-
+//            while (true) {
+//                try {
+//                    buff.put(name, getNextE());
+//                    waitNotify.randomSleep();
+//                } catch (InterruptedException ie) {
+//                    ie.printStackTrace();
+//                }
+//
+//            }
         }
 
         private static int e = 0;
@@ -112,17 +115,17 @@ public class waitNotify {
 
         public void run() {
             while (true) {
-                buff.get(name);
-                waitNotify.randomSleep();
+                try {
+                    buff.get(name);
+                    waitNotify.randomSleep();
+                } catch (InterruptedException ie) {
+                    ie.printStackTrace();
+                }
             }
         }
     }
 
-    private static void randomSleep() {
-        try {
-            Thread.sleep(new Random().nextInt(1000));
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+    private static void randomSleep() throws InterruptedException {
+        Thread.sleep(new Random().nextInt(1000));
     }
 }

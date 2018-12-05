@@ -1,13 +1,13 @@
 package com.ericsson.jic.process;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Random;
-
 import com.sun.jna.Library;
 import com.sun.jna.Native;
 import com.sun.jna.NativeLong;
 import com.sun.jna.Structure;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.Random;
 
 /**
  * Producer Consumer Pattern: Using Posix Message Queue through JNA
@@ -24,7 +24,7 @@ public class JnaMqConsumer extends Thread {
 
             public static class ByReference extends MsgBuf implements Structure.ByReference {}
 
-            public static class ByValue extends MsgBuf implements Structure.ByValue {}
+            // public static class ByValue extends MsgBuf implements Structure.ByValue {}
 
             public NativeLong mtype; /* type of message */
             public byte[] mtext = new byte[1024];
@@ -65,12 +65,10 @@ public class JnaMqConsumer extends Thread {
         msqid = IPCLibrary.INSTANCE.msgget(msgkey, 0666 | IPC_CREAT);
         if (msqid < 0) {
             System.out.println("msgget() failed! return:" + msqid + "  errno:" + Native.getLastError());
-            System.exit(0);
+            System.exit(-1);
         }
 
         System.out.println("message queue(id:" + msqid + ") has been open");
-
-        // prepare receiving buffer
     }
 
     public void run() {

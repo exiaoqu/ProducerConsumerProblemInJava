@@ -40,52 +40,51 @@ public class nioShmProducer extends Thread {
             // acquire file size, for mapping share memory
             int size = (int) fileChannel.size();
 
+            System.out.println("fileChannel.size() = " + size);
+
             // acquire the read-write share memory
             mappedByteBuffer = fileChannel.map(FileChannel.MapMode.READ_WRITE, 0, size).load();
         } catch (IOException ex) {
             ex.printStackTrace();
-            System.exit(0);
+            System.exit(-1);
         }
 
     }
 
     public void run() {
         int e = 0;
-        
+        boolean fullFlag = false;
         while (true) {
-
             try {
-                FileLock lock = fileChannel.tryLock(); // exclusive lock on the file channel
-                if (lock != null) {
+                FileLock lock;  // exclusive lock on the file channel
+                if((lock = fileChannel.tryLock()) != null) {
+                   try {
+                       int capacity = mappedByteBuffer.getInt(QUEUE_CAPACITY_OFFSET);
+                       if(capacity < CAPACITY) {
+                           fullFlag = false;
+                           System.out.println("capacity = " + capacity);
+                           System.out.println("[" + name + "] Producing value : +" + e);
+                           byte[] bytes = String.format("%d(%s)", e++, name).getBytes();
+                           int offset = QUEUE_START_OFFSET + QUEUE_CONTENT_LENGTH * capacity++;
+                           mappedByteBuffer.putInt(offset, bytes.length);
+                           mappedByteBuffer.position(offset + 4 * Integer.BYTES);
+                           mappedByteBuffer.put(bytes);
+                           mappedByteBuffer.putInt(QUEUE_CAPACITY_OFFSET, capacity);
 
-                    int capacity = mappedByteBuffer.getInt(QUEUE_CAPACITY_OFFSET);
-                    System.out.println("capacity = " + capacity);
-                    
-                    if (capacity >= CAPACITY) {
-                        System.out.println("Queue is full, Producer[" + name + "] process waiting for "
-                                + "consumer to take something from share memory.");
-                    } else {
-                        System.out.println("[" + name + "] Producing value : +" + e);
-                        
-                        byte[] bytes = String.format("%d(%s)", e++, name).getBytes();
-                        
-                        for(int index = 0; index < bytes.length; index++) {
-                            mappedByteBuffer.put(capacity * QUEUE_CONTENT_LENGTH + QUEUE_START_OFFSET + index, bytes[index]);
-                        }
-                        
-                        capacity++;
-                        mappedByteBuffer.putInt(QUEUE_CAPACITY_OFFSET, capacity);
-                    }
+                       } else {
+                           if(fullFlag == false) {
+                               fullFlag = true;
+                               System.out.println("capacity = " + capacity);
+                               System.out.println("Queue in share memory is full, Producer[" + name
+                                       + "] is waiting for consumer to take!");
+                           }
+                       }
+                   } finally {
+                       lock.release();
+                   }
 
-                    lock.release();
-
-                } else {
-                    // System.err.println("Producer: trylock failed");
-                    continue;
+                   randomSleep();
                 }
-
-                randomSleep();
-
             } catch (InterruptedException ie) {
                 ie.printStackTrace();
             } catch (IOException ex) {
@@ -93,7 +92,6 @@ public class nioShmProducer extends Thread {
                 System.exit(-1);
             }
         }
-
     }
 
     private static void randomSleep() throws InterruptedException {

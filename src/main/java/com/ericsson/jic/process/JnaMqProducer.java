@@ -24,7 +24,7 @@ public class JnaMqProducer extends Thread {
 
             public static class ByReference extends MsgBuf implements Structure.ByReference {}
 
-            public static class ByValue extends MsgBuf implements Structure.ByValue {}
+            // public static class ByValue extends MsgBuf implements Structure.ByValue {}
 
             public NativeLong mtype; /* type of message */
             public byte[] mtext = new byte[1024];
@@ -63,7 +63,7 @@ public class JnaMqProducer extends Thread {
         msqid = IPCLibrary.INSTANCE.msgget(msgkey, 0666 | IPC_CREAT);
         if (msqid < 0) {
             System.out.println("msgget() failed! return:" + msqid + "  errno:" + Native.getLastError());
-            System.exit(0);
+            System.exit(-1);
         }
 
         System.out.println("message queue(id:" + msqid + ") has been open");
@@ -79,11 +79,8 @@ public class JnaMqProducer extends Thread {
 
             // Sending message
             byte[] bytes = String.format("%d(%s)", e, name).getBytes();
-            System.arraycopy(bytes, 0, message.mtext, 0, bytes.length);
-         
-            // message.mtext = Native.toByteArray(String.format("%d(%s)", e, name));
 
-            // System.out.println("byte[] length = " + message.mtext.length + " NativeSize(Byte.TYPE) = " + Native.getNativeSize(Byte.TYPE));
+            System.arraycopy(bytes, 0, message.mtext, 0, bytes.length);
 
             int ret = IPCLibrary.INSTANCE.msgsnd(msqid, message, message.mtext.length * Native.getNativeSize(Byte.TYPE),
                     0);

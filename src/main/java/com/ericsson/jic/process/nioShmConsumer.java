@@ -22,7 +22,7 @@ public class nioShmConsumer extends Thread {
     private String name;
     private FileChannel fileChannel;
     private MappedByteBuffer mappedByteBuffer;
-    byte[] bytes = new byte[QUEUE_CONTENT_LENGTH];
+    byte[] bytes = new byte[QUEUE_CONTENT_LENGTH - 4 * Integer.BYTES];
 
     public nioShmConsumer(String name, String fileName) {
         this.name = name;
@@ -45,42 +45,41 @@ public class nioShmConsumer extends Thread {
 
         } catch (IOException ex) {
             ex.printStackTrace();
-            System.exit(0);
+            System.exit(-1);
         }
     }
 
     public void run() {
+        boolean emptyFlag = false;
         while (true) {
             try {
-                FileLock lock = fileChannel.tryLock(); // exclusive lock on the file channel
-                if (lock != null) {
+                FileLock lock;  // exclusive lock on the file channel
+                if((lock = fileChannel.tryLock()) != null) {
+                    try {
+                        int capacity = mappedByteBuffer.getInt(QUEUE_CAPACITY_OFFSET);
+                        if(capacity > 0) {
+                            emptyFlag = false;
+                            System.out.println("capacity = " + capacity);
+                            int offset = QUEUE_START_OFFSET + QUEUE_CONTENT_LENGTH * --capacity;
+                            int length = mappedByteBuffer.getInt(offset);
+                            mappedByteBuffer.position(offset + 4 * Integer.BYTES);
+                            mappedByteBuffer.get(bytes);
+                            mappedByteBuffer.putInt(QUEUE_CAPACITY_OFFSET, capacity);
 
-                    int capacity = mappedByteBuffer.getInt(QUEUE_CAPACITY_OFFSET);
-                    System.out.println("capacity = " + capacity);
-
-                    if (capacity == 0) {
-                        System.out.println("Queue is empty, Consumer[" + name + "] thread is waiting for Producer");
-                    } else {
-                        capacity--;
-                        
-                        for(int index = 0; index < QUEUE_CONTENT_LENGTH; index++) {
-                            bytes[index] = mappedByteBuffer.get(capacity * QUEUE_CONTENT_LENGTH + QUEUE_START_OFFSET + index);
+                            System.out.println("[" + name + "] Consuming value : -" + new String(bytes));
+                        } else {
+                            if(emptyFlag == false) {
+                                emptyFlag = true;
+                                System.out.println("capacity = " + capacity);
+                                System.out.println("Queue in share memory is empty, Consumer[" + name + "] is waiting for Producer to put");
+                            }
                         }
-                        
-                        mappedByteBuffer.putInt(QUEUE_CAPACITY_OFFSET, capacity);
-                        
-                        System.out.println("[" + name + "] Consuming value : -" + new String(bytes));
+                    } finally {
+                        lock.release();
                     }
 
-                    lock.release();
-
-                } else {
-                    // System.err.println("Consumer: lock failed");
-                    continue;
+                    randomSleep();
                 }
-
-                randomSleep();
-
             } catch (InterruptedException ie) {
                 ie.printStackTrace();
             } catch (IOException ex) {

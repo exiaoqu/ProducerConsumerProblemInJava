@@ -26,6 +26,7 @@ public class nioShmConsumer extends Thread {
 
     public nioShmConsumer(String name, String fileName) {
         this.name = name;
+        this.setName(name);
         
         try {
             // acquire an random access file object
@@ -54,7 +55,7 @@ public class nioShmConsumer extends Thread {
         while (true) {
             try {
                 FileLock lock;  // exclusive lock on the file channel
-                if((lock = fileChannel.tryLock()) != null) {
+                if((lock = fileChannel.lock()) != null) {
                     try {
                         int capacity = mappedByteBuffer.getInt(QUEUE_CAPACITY_OFFSET);
                         if(capacity > 0) {

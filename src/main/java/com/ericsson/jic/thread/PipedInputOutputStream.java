@@ -62,6 +62,7 @@ public class PipedInputOutputStream {
         public Producer(final String name, final Buffer buff) {
             this.name = name;
             this.buff = buff;
+            this.setName(name);
         }
 
         public void run() {
@@ -110,6 +111,7 @@ public class PipedInputOutputStream {
         public Consumer(final String name, final Buffer buff) {
             this.name = name;
             this.buff = buff;
+            this.setName(name);
         }
 
         public void run() {

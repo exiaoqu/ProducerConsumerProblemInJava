@@ -55,6 +55,7 @@ public class waitNotify {
                 System.out.println("Queue is empty, Consumer[" + name + "] thread is waiting for Producer");
                 this.wait(); // this.wait(0, 2000)
             }
+
             String e = queue.poll();
             System.out.println("[" + name + "] Consuming value : -" + e);
             this.notify(); // this.notifyAll()
@@ -70,6 +71,7 @@ public class waitNotify {
         public Producer(final String name, final Buffer buff) {
             this.name = name;
             this.buff = buff;
+            this.setName(name);
         }
 
         public void run() {
@@ -111,6 +113,7 @@ public class waitNotify {
         public Consumer(final String name, final Buffer buff) {
             this.name = name;
             this.buff = buff;
+            this.setName(name);
         }
 
         public void run() {

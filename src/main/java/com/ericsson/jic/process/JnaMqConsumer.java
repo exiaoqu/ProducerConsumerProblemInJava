@@ -59,6 +59,7 @@ public class JnaMqConsumer extends Thread {
 
     public JnaMqConsumer(String name) {
         this.name = name;
+        this.setName(name);
 
         // create Sys-V message queue
         NativeLong msgkey = new NativeLong(MSG_QUEUE_KEY);

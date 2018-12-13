@@ -49,6 +49,7 @@ public class waitNotifyUninterruptibleTest {
         public Producer(final String name, final Buffer buff) {
             this.name = name;
             this.buff = buff;
+            this.setName(name);
         }
 
         public void run() {
@@ -75,6 +76,7 @@ public class waitNotifyUninterruptibleTest {
         public Consumer(final String name, final Buffer buff, Thread thread) {
             this.name = name;
             this.buff = buff;
+            this.setName(name);
             this.thread = thread;
         }
 

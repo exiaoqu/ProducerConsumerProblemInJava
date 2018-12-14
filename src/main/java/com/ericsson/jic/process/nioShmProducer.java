@@ -12,7 +12,7 @@ import java.util.Random;
 /**
  * Producer Consumer Pattern: Using NIO and Shared Memory(Direct Byte Buffer)
  * CLI running:
- * mvn exec:java -Dexec.mainClass="com.ericsson.jic.process.nioShmProducer" -Dexec.args="P-1"
+ * mvn exec:java -D exec.mainClass="com.ericsson.jic.process.nioShmProducer" -D exec.args="P-1"
  */
 public class nioShmProducer extends Thread {
     private static final int QUEUE_CAPACITY_OFFSET = 0;

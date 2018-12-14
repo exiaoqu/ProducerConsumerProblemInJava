@@ -1,6 +1,5 @@
 package com.ericsson.jic.process;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.MappedByteBuffer;
@@ -11,7 +10,7 @@ import java.util.Random;
 /**
  * Producer Consumer Pattern: Using NIO and Shared Memory(Direct Byte Buffer)
  * CLI running:
- * mvn exec:java -Dexec.mainClass="com.ericsson.jic.process.nioShmConsumer" -Dexec.args="C-1"
+ * mvn exec:java -D exec.mainClass="com.ericsson.jic.process.nioShmConsumer" -D exec.args="C-1"
  */
 public class nioShmConsumer extends Thread {
     private static final int QUEUE_CAPACITY_OFFSET = 0;
@@ -64,10 +63,10 @@ public class nioShmConsumer extends Thread {
                             int offset = QUEUE_START_OFFSET + QUEUE_CONTENT_LENGTH * --capacity;
                             int length = mappedByteBuffer.getInt(offset);
                             mappedByteBuffer.position(offset + 4 * Integer.BYTES);
-                            mappedByteBuffer.get(bytes);
+                            mappedByteBuffer.get(bytes, 0, length);
                             mappedByteBuffer.putInt(QUEUE_CAPACITY_OFFSET, capacity);
 
-                            System.out.println("[" + name + "] Consuming value : -" + new String(bytes));
+                            System.out.println("[" + name + "] Consuming value : -" + new String(bytes,0, length));
                         } else {
                             if(emptyFlag == false) {
                                 emptyFlag = true;

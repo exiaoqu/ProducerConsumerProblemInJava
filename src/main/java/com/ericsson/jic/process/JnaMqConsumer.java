@@ -12,7 +12,7 @@ import java.util.Random;
 /**
  * Producer Consumer Pattern: Using Posix Message Queue through JNA
  * CLI running:
- * mvn exec:java -Dexec.mainClass="com.ericsson.jic.process.JnaMqConsumer" -Dexec.args="C-1"
+ * mvn exec:java -D exec.mainClass="com.ericsson.jic.process.JnaMqConsumer" -D exec.args="C-1"
  */
 public class JnaMqConsumer extends Thread {
 

@@ -12,7 +12,7 @@ import com.sun.jna.Structure;
 /**
  * Producer Consumer Pattern: Using Posix Message Queue through JNA
  * CLI running: 
- * mvn exec:java -Dexec.mainClass="com.ericsson.jic.process.JnaMqProducer" -Dexec.args="P-1"
+ * mvn exec:java -D exec.mainClass="com.ericsson.jic.process.JnaMqProducer" -D exec.args="P-1"
  */
 public class JnaMqProducer extends Thread {
 
